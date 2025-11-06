@@ -47,7 +47,7 @@ Conditions:
 Mappings:
   AWSRegionAMI:
     us-east-1:
-      AMI: ami-0c02fb55b5f5c9a00
+      AMI: ami-080c353f4798a202f
     us-west-2:
       AMI: ami-0a8e758f5e873d1c1
     eu-west-1:
@@ -300,6 +300,16 @@ Resources:
                   - dynamodb:BatchGetItem
                   - dynamodb:BatchWriteItem
                 Resource: !GetAtt DynamoDBTable.Arn
+        - PolicyName: ELBAccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - elasticloadbalancing:RegisterTargets
+                  - elasticloadbalancing:DeregisterTargets
+                  - elasticloadbalancing:DescribeTargetHealth
+                Resource: !Ref ALBTargetGroup                 
 
   EC2InstanceProfile:
     Type: AWS::IAM::InstanceProfile
@@ -329,10 +339,10 @@ Resources:
           yum update -y
           
           # Install Go
-          GO_VERSION="1.21.5"
-          wget https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz
-          rm -rf /usr/local/go && tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
-          echo 'export PATH=$PATH:/usr/local/go/bin' >> /etc/profile
+          GO_VERSION="1.25.3"
+          wget https://go.dev/dl/go1.25.3.linux-amd64.tar.gz
+          rm -rf /usr/local/go && tar -C /usr/local -xzf go1.25.3.linux-amd64.tar.gz
+          echo 'export PATH=$$PATH:/usr/local/go/bin' >> /etc/profile
           echo 'export GOPATH=/home/ec2-user/go' >> /etc/profile
           source /etc/profile
           
@@ -381,17 +391,17 @@ Resources:
           # Install CloudWatch agent (optional)
           wget https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
           rpm -U ./amazon-cloudwatch-agent.rpm
+
+          INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+          aws elbv2 register-targets \
+            --target-group-arn ${ALBTargetGroup} \
+            --targets Id=$INSTANCE_ID,Port=8080
+
+
       Tags:
         - Key: Name
           Value: !Sub ${EnvironmentName}-go-backend
 
-  # Register instance with target group
-  TargetGroupAttachment:
-    Type: AWS::ElasticLoadBalancingV2::TargetGroupAttachment
-    Properties:
-      TargetGroupArn: !Ref ALBTargetGroup
-      TargetId: !Ref BackendInstance
-      Port: 8080
 
   # ===================================
   # S3 Buckets
@@ -486,8 +496,6 @@ Resources:
           # Frontend from S3
           - Id: S3Origin
             DomainName: !GetAtt StaticAssetsBucket.DomainName
-            S3OriginConfig:
-              OriginAccessIdentity: ''
             CustomOriginConfig:
               HTTPPort: 80
               HTTPSPort: 443

@@ -3,45 +3,30 @@ import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
-	// Preprocess with Vite
+	// Consult https://kit.svelte.dev/docs/integrations#preprocessors
 	preprocess: vitePreprocess(),
 
 	kit: {
-		// Use static adapter for S3 deployment
+		// Use static adapter for S3/CloudFront deployment
 		adapter: adapter({
 			// Output directory
 			pages: 'build',
 			assets: 'build',
+			// Fallback for SPA routing (important for CloudFront)
 			fallback: 'index.html',
 			precompress: false,
 			strict: true
 		}),
-
-		// Prerendering configuration
 		prerender: {
-			handleHttpError: 'warn',
-			handleMissingId: 'warn',
-			entries: ['*']
-		},
-
-		// Path configuration
-		paths: {
-			base: '',
-			assets: ''
-		},
-
-		// CSRF protection
-		csrf: {
-			checkOrigin: true
-		},
-
-		// Alias configuration
-		alias: {
-			$components: 'src/components',
-			$stores: 'src/stores',
-			$utils: 'src/utils',
-			$types: 'src/types'
-		}
+      		handleHttpError: ({ path, referrer, message }) => {
+        		// Ignore 404s for og-image.png
+        		if (path === '/og-image.png') {
+          			return;
+        		}
+        		// Throw for other errors
+        		throw new Error(message);
+      		}
+    	}
 	}
 };
 

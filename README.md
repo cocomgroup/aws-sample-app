@@ -78,12 +78,7 @@ project/
 cd infrastructure
 
 # Create the stack
-aws cloudformation create-stack \
-  --stack-name my-webapp \
-  --template-body file://webapp-svelte-go.yaml \
-  --parameters \
-    ParameterKey=KeyName,ParameterValue=your-key-name \
-  --capabilities CAPABILITY_IAM
+aws cloudformation create-stack --stack-name my-webapp --template-body file://infrastructure/webapp-svelte-go.yaml --parameters ParameterKey=KeyName,ParameterValue=my-key ParameterKey=EnvironmentName,ParameterValue=dev ParameterKey=InstanceType,ParameterValue=t3.micro --capabilities CAPABILITY_IAM --region us-east-1
 
 # Wait for completion (10-15 minutes)
 aws cloudformation wait stack-create-complete --stack-name my-webapp
@@ -134,10 +129,10 @@ chmod +x infrastructure/deploy-full-stack.sh
 
 # Deploy everything
 ./infrastructure/deploy-full-stack.sh \
-  my-webapp \
+  aws-sample-app \
   ./frontend \
   ./backend \
-  ~/.ssh/your-key.pem
+  ~/.ssh/my-key.pem
 ```
 
 ### 4. Access Your Application
