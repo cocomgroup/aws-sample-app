@@ -1,4 +1,29 @@
-# 📦 Svelte + Go AWS Deployment - Complete Package
+chrome://settings/searchEngines
+  default-search          
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  chrome://settings/searchEngines
+    Sports          
+    
+    5b19ece5-e717-4ab5-bad0-ff9209c111a9
+    📦 Svelte + Go AWS Deployment - Complete Package
 
 Welcome! This package contains everything you need to deploy your TypeScript/Svelte frontend and Go backend to AWS using CloudFormation.
 

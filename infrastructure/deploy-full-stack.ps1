@@ -194,7 +194,14 @@ if ($KeyFile -ne "") {
         Write-Host "Failed to connect to EC2 instance" -ForegroundColor Red
         exit 1
     }
-    
+
+    # Stop the service if it's running
+    Write-Host "Stopping backend service..."
+    ssh -i $KeyFile -o StrictHostKeyChecking=no ec2-user@$backendIp "sudo systemctl stop backend || true"
+
+    Write-Host "Creating application directory..."
+    ssh -i $KeyFile -o StrictHostKeyChecking=no "$ecUser@$backendIp" "sudo mkdir -p $remoteDir && sudo chown ec2-user:ec2-user $remoteDir"
+
     Write-Host "Uploading backend binary..." -ForegroundColor Yellow
     scp -i $KeyFile "$BackendDir/backend" "$ecUser@${backendIp}:$remoteDir/"
     
@@ -202,7 +209,39 @@ if ($KeyFile -ne "") {
         Write-Host "Failed to upload backend binary" -ForegroundColor Red
         exit 1
     }
-    
+
+    Write-Host "Setting up backend service..."
+    ssh -i $KeyFile -o StrictHostKeyChecking=no ec2-user@$backendIp @"
+    sudo tee /etc/systemd/system/backend.service > /dev/null <<'EOF'
+[Unit]
+Description=Backend API Service
+After=network.target
+
+[Service]
+Type=simple
+User=ec2-user
+WorkingDirectory=/opt/webapp
+ExecStart=/opt/webapp/backend
+Restart=always
+RestartSec=5
+Environment='PORT=8080'
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=backend
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    sudo systemctl daemon-reload
+    sudo systemctl enable backend
+    sudo systemctl restart backend
+"@
+
+    Write-Host "Checking backend service status..."
+    ssh -i $KeyFile -o StrictHostKeyChecking=no ec2-user@$backendIp "sudo systemctl status backend --no-pager"    
+ 
     Write-Host "Setting permissions and restarting service..." -ForegroundColor Yellow
     ssh -i $KeyFile "$ecUser@$backendIp" @"
 sudo chmod +x $remoteDir/backend

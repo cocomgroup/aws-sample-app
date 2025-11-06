@@ -23,6 +23,9 @@ const config = {
         		if (path === '/og-image.png') {
           			return;
         		}
+				else if (path === '/favicon.png') {
+          			return;
+        		}
         		// Throw for other errors
         		throw new Error(message);
       		}

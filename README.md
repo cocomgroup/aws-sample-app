@@ -119,6 +119,8 @@ cp ../backend-example/go.mod .
 # Customize go.mod with your module name
 # Install dependencies
 go mod tidy
+go mod download
+go run main.go
 ```
 
 ### 3. Deploy Application
@@ -128,8 +130,8 @@ go mod tidy
 chmod +x infrastructure/deploy-full-stack.sh
 
 # Deploy everything
-./infrastructure/deploy-full-stack.sh \
-  aws-sample-app \
+./infrastructure/deploy-full-stack.ps1 \
+  my-webapp \
   ./frontend \
   ./backend \
   ~/.ssh/my-key.pem
