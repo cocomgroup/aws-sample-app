@@ -130,11 +130,7 @@ go run main.go
 chmod +x infrastructure/deploy-full-stack.sh
 
 # Deploy everything
-./infrastructure/deploy-full-stack.ps1 \
-  my-webapp \
-  ./frontend \
-  ./backend \
-  ~/.ssh/my-key.pem
+./infrastructure/deploy-full-stack.ps1 my-webapp ./frontend ./backend ~/.ssh/my-key.pem
 ```
 
 ### 4. Access Your Application
@@ -146,6 +142,21 @@ aws cloudformation describe-stacks \
   --query 'Stacks[0].Outputs[?OutputKey==`CloudFrontURL`].OutputValue' \
   --output text
 ```
+Update alb to point to ec2 instance
+
+### List cloudfront distributions
+aws cloudfront list-distributions --query 'DistributionList.Items[*].[DomainName,Origins.Items[0].DomainName,Comment]' --output table
+-------------------------------------------------------------------------------------------------------------
+|                                             ListDistributions                                             |
++--------------------------------+---------------------------------------------------+----------------------+
+|  d1vw6971tkz2ev.cloudfront.net |  dev-webapp-static-684039303263.s3.amazonaws.com  |  dev Svelte Frontend |
+|  d2isf2i5dhn0ft.cloudfront.net |  dev-alb-2042808171.us-east-1.elb.amazonaws.com   |                      |
++--------------------------------+---------------------------------------------------+----------------------+
+Update .env.production
+VITE_API_URL=https://d2isf2i5dhn0ft.cloudfront.net
+
+browser -> https://d1vw6971tkz2ev.cloudfront.net/
+
 
 ## 🛠️ Development Workflow
 

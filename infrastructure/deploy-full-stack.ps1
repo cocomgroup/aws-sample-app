@@ -260,7 +260,16 @@ Write-Host ""
 Write-Host "Testing health endpoint..."
 curl -f http://localhost:8080/health
 "@
-    
+
+   Write-Host "Installing Redis service..." -ForegroundColor Yellow
+    ssh -i $KeyFile "$ecUser@$backendIp" @"
+sudo dnf install redis6 -y
+sudo systemctl start redis6
+sudo systemctl enable redis6
+sudo systemctl status redis6
+sudo systemctl restart backend
+"@
+
     Write-Host "Backend deployed and running" -ForegroundColor Green
 } else {
     Write-Host "Step 5: Skipping EC2 deployment (no key file provided)" -ForegroundColor Yellow
